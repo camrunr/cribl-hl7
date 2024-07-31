@@ -1,0 +1,180 @@
+output: default
+streamtags: []
+groups:
+  wBT0fu:
+    name: Replace Raw with JSON
+    disabled: true
+    index: 11
+asyncFuncTimeout: 1000
+functions:
+  - id: comment
+    filter: "true"
+    disabled: null
+    conf:
+      comment: Grab all the segment types in the log record
+  - id: regex_extract
+    filter: "true"
+    disabled: null
+    conf:
+      source: _raw
+      iterations: 100
+      overwrite: false
+      regex: /[\r\n]+(?<seg_types>[A-Z0-9]+)/g
+    final: false
+  - id: comment
+    filter: "true"
+    disabled: null
+    conf:
+      comment: And add MSH to the top of the segtypes list
+  - id: eval
+    filter: "true"
+    disabled: null
+    conf:
+      add:
+        - disabled: false
+          value: seg_types.unshift('MSH')
+          name: ""
+      remove:
+        - segtype
+        - msh_fields
+        - segments.MSH*
+    final: false
+    description: Add MSH to the array
+  - id: comment
+    filter: "true"
+    disabled: null
+    conf:
+      comment: Break up the different segments into an array
+  - id: eval
+    filter: "true"
+    disabled: null
+    conf:
+      add:
+        - disabled: false
+          name: segments
+          value: _raw.replace(/[\r\n]+/g,'\r')
+        - disabled: false
+          name: segments
+          value: segments.split('\r')
+        - disabled: false
+          name: segments
+          value: C.Misc.zip(seg_types,segments)
+      remove:
+        - seg_types
+    final: false
+  - id: comment
+    filter: "true"
+    disabled: null
+    conf:
+      comment: Field extracts
+  - id: code
+    filter: segments
+    disabled: false
+    conf:
+      maxNumOfIterations: 5000
+      activeLogSampleRate: 1
+      useUniqueLogChannel: true
+      code: >-
+        // drop fields in segments that are empty
+
+        const delete_empties = true
+
+        // parse the subfields that have ^^ delims into an array (beta)
+
+        const parse_subs = false
+
+        // leave some tracks for debugging purposes
+
+        const debugging = false
+
+
+        try {
+           for (let [key,seg_value] of Object.entries(__e.segments)) {
+              let mapping = C.vars[key]
+              if (mapping) {
+                 // debugging crumbs
+                 debugging && (__e.debug_mapping = mapping)
+                 debugging && (__e.debug_seg_value = seg_value)
+                 // split the segment data
+                 let segs = seg_value.split('|')
+                 // may not be right! TESTING NEEDED
+                 // seems to work with sample data so far
+                 // drop the first key in a segment if it is the segment ID itself
+                 segs[0] == key && segs.shift() 
+                 // create the segment object
+                 let answer = C.Misc.zip(mapping,segs)
+                 // delete empty values if flag is set
+                 // BETA: parse sub fields if flag is set
+                 if (delete_empties || parse_subs) {
+                    for (let [k,v] of Object.entries(answer)) {
+                       if (delete_empties && v == '') {
+                          answer[k] = undefined
+                       }
+                       // only parse subs if flag is set and the value contains >1 delims
+                       if (parse_subs && v.match(/\^.*\^/)) {
+                          answer[k] = answer[k].split('^')
+                       }
+                    }
+                    __e[key] = answer
+                    __e.segments[key] = !debugging ? undefined : __e.segments[key] 
+                 }
+              } else {
+                 // if this isn't a segment key we know about
+                 // just keep the raw text of the segment
+                 __e[key] = seg_value
+              }
+              // clean up temp variables unless debugging
+              !debugging && delete __e.segments[key]
+              if (Object.entries(__e.segments).length == 0) {
+                 delete __e.segments
+              } 
+           }
+        } catch (err) {
+           __e.CRIBLERR = err.message
+        }
+  - id: comment
+    filter: "true"
+    disabled: null
+    conf:
+      comment: Drop original _raw?
+  - id: eval
+    filter: "true"
+    disabled: null
+    conf:
+      remove:
+        - _raw
+  - id: comment
+    filter: "true"
+    disabled: null
+    conf:
+      comment: "Optional/Example: Replace _raw with the extracted fields in
+        stringified JSON"
+  - id: serialize
+    filter: "true"
+    disabled: true
+    conf:
+      type: json
+      dstField: _raw
+      fields:
+        - "!cribl*"
+        - "!_*"
+        - "!source*"
+        - "!index"
+        - "!host"
+        - "*"
+    groupId: wBT0fu
+  - id: eval
+    filter: "true"
+    disabled: true
+    conf:
+      keep:
+        - _raw
+        - index
+        - host
+        - source*
+        - _time
+        - cribl*
+      remove:
+        - "*"
+    groupId: wBT0fu
+    description: Clean up the other fields
