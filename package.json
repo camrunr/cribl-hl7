@@ -1,1 +1,1 @@
-{"name":"HL7","version":"1.0.0","author":"Jon Rust - Cribl","displayName":"Cribl HL7 v25","tags":{"streamtags":["healthcare","hl7"],"dataType":["logs"],"useCase":["routing","filtering"]}}
+{"name":"cribl-hl7-v25","version":"1.0.1","author":"Jon Rust - Cribl","description":"Parse HL7 v2.5 healthcare data into JSON for sanity and glory.","displayName":"Cribl HL7 v25","tags":{"streamtags":["healthcare","hl7"],"dataType":["logs"],"useCase":["routing","filtering"]}}

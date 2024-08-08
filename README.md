@@ -53,6 +53,11 @@ The Cribl admin will need to decide what to do with the parsed data. By default 
 
 ## Release Notes
 
+### Version 1.0.1 - 2024-08-08
+* Updated the description
+* Added github info in this doc
+* NO FUNCTIONAL CHANGES MADE TO THE PACK
+
 ### Version 1.0.0 - 2024-07-31
 * Allowed for \n as well as \r in segment separators
 * Added debugging flag in Code function (off by default)
@@ -70,7 +75,7 @@ The Cribl admin will need to decide what to do with the parsed data. By default 
 * 1st pre-release
 
 ## Contributing to the Pack
-To contribute to the Pack, please contact the author
+The Pack source can be found in [GitHub](https://github.com/camrunr/cribl-hl7). Feel free to fork the repo and have your way. Issue a PR if you think your changes are useful to others, and we'll review.
 
 ## Contact
 Jon Rust <jrust@cribl.io>
